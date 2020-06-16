@@ -1,9 +1,8 @@
 package lotto.controller;
 
-import lotto.domain.Lotto;
-import lotto.domain.LottoFactory;
-import lotto.domain.LottoResult;
+import lotto.domain.*;
 import lotto.view.InputView;
+import lotto.view.PurchaseLottoInput;
 import lotto.view.ResultView;
 
 import java.util.List;
@@ -12,14 +11,18 @@ public class LottoController {
 
     public static void main(String[] args) {
         InputView inputView = new InputView();
-        inputView.inputPurchasePrice();
+        inputView.inputPurchaseLotto();
 
-        List<Lotto> lottos = LottoFactory.createLottos(inputView.getPurchasePrice());
+        PurchaseLottoInput purchaseLottoInput = inputView.getPurchaseLottoInput();
+        Money money = Money.of(purchaseLottoInput.getPurchasePrice());
+        List<Lotto> lottos = LottoFactory.createLottos(money, purchaseLottoInput.getManualLottoNumbers());
+
         ResultView resultView = new ResultView();
-        resultView.printLottos(lottos);
-
+        resultView.printLottos(lottos, purchaseLottoInput.getManualSize());
         inputView.inputWinningNumbersAndBonusNumber();
-        LottoResult lottoResult = LottoResult.of(inputView.getWinningNumbers(), lottos);
-        resultView.printStatistics(lottoResult, inputView.getPurchasePrice());
+
+        WinningNumbers winningNumbers = WinningNumbers.of(Lotto.of(inputView.getWinningNumbers()), LottoNumber.of(inputView.getBonusNumber()));
+        LottoResult lottoResult = LottoResult.of(winningNumbers, lottos);
+        resultView.printStatistics(lottoResult, money);
     }
 }
