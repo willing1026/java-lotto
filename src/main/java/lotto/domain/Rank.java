@@ -1,7 +1,5 @@
 package lotto.domain;
 
-import common.StringResources;
-
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -13,6 +11,8 @@ public enum Rank {
     FOURTH(4, false, 50_000),
     FIFTH(3, false, 5_000),
     MISS(0, false, 0);
+
+    private static final int SECOND_RANK_MATCH_COUNT = 5;
 
     private final int matchCount;
     private final boolean matchBonus;
@@ -26,7 +26,7 @@ public enum Rank {
 
     public static Rank of(int matchCount, boolean matchBonus) {
 
-        if (matchCount == 5 && matchBonus) {
+        if (matchCount == SECOND_RANK_MATCH_COUNT && matchBonus) {
             return SECOND;
         }
 

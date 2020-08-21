@@ -1,15 +1,19 @@
 package lotto.ui;
 
 import common.StringResources;
+import lotto.domain.LottoNumber;
 import lotto.domain.LottoResultNumber;
 import lotto.domain.Ticket;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class LottoInput {
 
     private static final String DELIMITER = ", ";
+    private static final int ZERO = 0;
 
     public static final int LOTTO_PRICE = 1000;
 
@@ -19,32 +23,49 @@ public class LottoInput {
         this.input = input;
     }
 
-    public int inputMoney() {
+    public int inputPrincipal() {
 
         ResultView.print(StringResources.MSG_BUY_MONEY);
-        int money = input.nextInt();
+        int principal = input.nextInt();
 
-        verifyPositiveMoney(money);
-        verifyMoneyUnit(money);
+        verifyPositiveMoney(principal);
+        verifyMoneyUnit(principal);
 
-        return money;
+        return principal;
+    }
+
+    public int inputManualLottoCount() {
+
+        ResultView.print(StringResources.MSG_MANUAL_LOTTO_COUNT);
+        return input.nextInt();
     }
 
     private void verifyPositiveMoney(int money) {
-        if (money <= 0) {
+        if (money <= ZERO) {
             throw new IllegalArgumentException(StringResources.ERR_MUST_BUY);
         }
     }
 
     private void verifyMoneyUnit(int money) {
-        if (money % LOTTO_PRICE != 0) {
+        if (money % LOTTO_PRICE != ZERO) {
             throw new IllegalArgumentException(StringResources.ERR_WRONG_UNIT);
         }
     }
 
-    public LottoResultNumber inputLottoResult() {
+    public List<LottoNumber> inputManualLottoList(int manualLottoCount) {
 
-        ResultView.print(StringResources.MSG_WINNING_NUMBER);
+        ResultView.print(StringResources.MSG_MANUAL_LOTTO_NUMBER);
+
+        List<LottoNumber> lottoNumbers = new ArrayList<>();
+
+        for (int i = 0; i < manualLottoCount; i++) {
+            lottoNumbers.add(new LottoNumber(makeTicket()));
+        }
+
+        return lottoNumbers;
+    }
+
+    private Ticket makeTicket() {
 
         String inputLine = input.nextLine();
         verifyResultInput(inputLine);
@@ -52,12 +73,17 @@ public class LottoInput {
         String[] split = inputLine.split(DELIMITER);
         verifySplitArray(split);
 
-        return new LottoResultNumber(new Ticket(
+        return new Ticket(
                 Arrays.stream(split)
                         .map(Integer::valueOf)
                         .collect(Collectors.toList()),
-                inputBonus())
-        );
+                inputBonus());
+    }
+
+    public LottoResultNumber inputLottoResult() {
+
+        ResultView.print(StringResources.MSG_WINNING_NUMBER);
+        return new LottoResultNumber(makeTicket());
     }
 
     private void verifyResultInput(String inputLine) {
@@ -67,7 +93,7 @@ public class LottoInput {
     }
 
     private void verifySplitArray(String[] split) {
-        if (split.length != 6) {
+        if (split.length != Ticket.LOTTO_NUMBERS_SIZE) {
             throw new IllegalArgumentException(StringResources.ERR_WRONG_RESULT_INPUT);
         }
     }

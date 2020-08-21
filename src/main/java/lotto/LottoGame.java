@@ -7,25 +7,51 @@ import lotto.domain.LottoResultNumber;
 import lotto.domain.RandomLottoCreator;
 import lotto.ui.ResultView;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 public class LottoGame {
 
-    private final int money;
-    private List<LottoNumber> lottoNumberList;
+    private static final int LOTTO_PRICE = 1000;
 
-    public LottoGame(int money) {
-        this.money = money;
+    private final List<LottoNumber> lottoNumberList = new ArrayList<>();
+    private final int principal;
+    private int manualLottoCount;
+    private int balance;
+
+    public LottoGame(int principal) {
+        this.principal = principal;
+        this.balance = principal;
     }
 
-    public void buy() {
+    public void setManualLottoCount(int manualLottoCount) {
+        this.manualLottoCount = manualLottoCount;
+        verifyManualLotto();
+    }
 
-        ResultView.print((money / 1000) + StringResources.MSG_BUY_QUANTITY);
+    public void buyManual(List<LottoNumber> manualLottoNumber) {
+        lottoNumberList.addAll(manualLottoNumber);
+        balance -= LOTTO_PRICE * manualLottoCount;
+    }
 
-        this.lottoNumberList = RandomLottoCreator.createLottoList(money);
+    private void verifyManualLotto() {
+        if (balance < 0) {
+            throw new IllegalArgumentException(StringResources.ERR_MANUAL_COUNT_OVER_PRINCIPAL);
+        }
+    }
 
-        for (LottoNumber lottoNumber : lottoNumberList) {
+    public void buyAuto() {
+
+        int manualCount = (principal - balance) / LOTTO_PRICE;
+        int autoCount = balance / LOTTO_PRICE;
+
+        ResultView.printLottoQuantity(manualCount, autoCount);
+
+        List<LottoNumber> lottoNumbers = RandomLottoCreator.createLottoList(balance);
+
+        for (LottoNumber lottoNumber : lottoNumbers) {
+            lottoNumberList.add(lottoNumber);
             ResultView.print(lottoNumber.toString());
         }
     }
@@ -37,13 +63,13 @@ public class LottoGame {
         ResultView.print(StringResources.MSG_WINNING_STATUS);
         ResultView.print(StringResources.LINE_SEPARATOR);
 
-        LottoResult lottoResult = new LottoResult(money, lottoNumberList, lottoResultNumber);
+        LottoResult lottoResult = new LottoResult(principal, lottoNumberList, lottoResultNumber);
         ResultView.printLottoResult(lottoResult);
         ResultView.printLottoEarningsRate(lottoResult);
     }
 
     private void verifyLottoNumberListIsNull() {
-        if (lottoNumberList == null) {
+        if (lottoNumberList.size() == 0) {
             throw new NoSuchElementException(StringResources.ERR_NO_LOTTO_LIST);
         }
     }
