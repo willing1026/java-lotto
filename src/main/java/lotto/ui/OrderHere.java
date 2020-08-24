@@ -1,19 +1,31 @@
 package lotto.ui;
 
+import lotto.LottoException;
+import lotto.domain.GameWinningCondition;
 import lotto.domain.LottoGame;
 import lotto.domain.LottoNumber;
-import lotto.domain.GameWinningCondition;
 import lotto.domain.PurchaseStandBy;
 import lotto.ui.input.InputChannel;
 import lotto.ui.output.OutputChannel;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static lotto.constants.MessageConstant.*;
+import static lotto.domain.LottoGameFactory.getNewManualGame;
+import static lotto.domain.LottoNumberFactory.getNewLottoNumber;
+import static lotto.domain.PurchaseStandBy.INPUT_SHOULD_NOT_LESS_THAN_PRICE_PER_GAME;
+import static lotto.domain.PurchaseStandBy.PRICE_PER_GAME;
 import static lotto.utils.StringUtils.splitByDelimiter;
 
 public class OrderHere {
+
+	private static final int ZERO = 0;
+	private static final int INCREASE = 1;
 
 	private final InputChannel inputChannel;
 	private final OutputChannel outputChannel;
@@ -24,17 +36,22 @@ public class OrderHere {
 	}
 
 	public PurchaseStandBy orderNewPurchasing() {
-		return new PurchaseStandBy(retryUntilGettingRightValue(getPurchasingPrice()));
+		Integer price = retryUntilGettingRightValue(getPurchasingPrice());
+		Integer manualGameCount = retryUntilGettingRightValue(getManualGameCount());
+		List<String[]> manualGameNumbers = retryUntilGettingRightValue(getManualGameNumbers(manualGameCount));
+		return new PurchaseStandBy(price, manualGameNumbers);
 	}
 
 	public GameWinningCondition receiveLastWeekPrize() {
-		LottoGame prizeLottoGame = new LottoGame(retryUntilGettingRightValue(getPrizeNumbers()));
-		LottoNumber bonusNumber = new LottoNumber(retryUntilGettingRightValue(getBonusNumber()));
+		String[] prizeNumbers = retryUntilGettingRightValue(getPrizeNumbers());
+		Integer bonus = retryUntilGettingRightValue(getBonusNumber());
+		LottoGame prizeLottoGame = getNewManualGame(prizeNumbers);
+		LottoNumber bonusNumber = getNewLottoNumber(bonus);
 		return new GameWinningCondition(prizeLottoGame, bonusNumber);
 	}
 
 	private Supplier<Optional<Integer>> getPurchasingPrice() {
-		return () -> Optional.ofNullable(sayQuestionAndGetInt(PLEASE_INPUT_PURCHASING_PRICE));
+		return () -> Optional.ofNullable(sayQuestionAndGetValidatedInt(PLEASE_INPUT_PURCHASING_PRICE));
 
 	}
 
@@ -44,6 +61,14 @@ public class OrderHere {
 
 	private Supplier<Optional<Integer>> getBonusNumber() {
 		return () -> Optional.ofNullable(sayQuestionAndGetInt(PLEASE_INPUT_BONUS_NUMBER));
+	}
+
+	private Supplier<Optional<Integer>> getManualGameCount() {
+		return () -> Optional.ofNullable(sayQuestionAndGetInt(PLEASE_INPUT_MANUAL_GAME_COUNT));
+	}
+
+	private Supplier<Optional<List<String[]>>> getManualGameNumbers(Integer count) {
+		return () -> Optional.ofNullable(sayQuestionAndGetManualNumbersToLimit(PLEASE_INPUT_MANUAL_GAME_NUMBERS, count));
 	}
 
 	private <T> T retryUntilGettingRightValue(Supplier<Optional<T>> supplier) {
@@ -70,9 +95,33 @@ public class OrderHere {
 		return inputChannel.getIntValue();
 	}
 
+	private Integer sayQuestionAndGetValidatedInt(String question) {
+		outputChannel.printLine(question);
+		int value = inputChannel.getIntValue();
+		if(value < PRICE_PER_GAME) {
+			throw new LottoException(String.format(INPUT_SHOULD_NOT_LESS_THAN_PRICE_PER_GAME, PRICE_PER_GAME));
+		}
+		return value;
+	}
+
 	private String[] sayQuestionAndGetStringArray(String question) {
 		outputChannel.printLine(question);
+		return getStringArray();
+	}
+
+	private String[] getStringArray() {
 		String input = inputChannel.getStringValue();
 		return splitByDelimiter(input);
+	}
+
+	private List<String[]> sayQuestionAndGetManualNumbersToLimit(String question, Integer limit) {
+		if(!(limit > ZERO)) {
+			return Collections.EMPTY_LIST;
+		}
+		outputChannel.printLine(question);
+		return Stream.iterate(ZERO, integer -> integer + INCREASE)
+				.limit(limit)
+				.map(integer -> getStringArray())
+				.collect(Collectors.toList());
 	}
 }

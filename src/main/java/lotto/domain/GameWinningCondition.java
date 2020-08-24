@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static lotto.constants.MessageConstant.BONUS_NUMBER_SHOULD_NOT_CONTAINS_PRIZE_GAME;
+import static lotto.domain.LottoGameFactory.getNewManualGame;
+import static lotto.domain.LottoNumberFactory.getNewLottoNumber;
 
 public class GameWinningCondition {
 
