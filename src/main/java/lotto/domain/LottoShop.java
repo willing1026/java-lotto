@@ -1,6 +1,7 @@
 package lotto.domain;
 
 public class LottoShop {
+
     private static final int DEFAULT_LOTTO_PRICE = 1000;
 
     private LottoShop() {
@@ -14,18 +15,23 @@ public class LottoShop {
         return LottoShop.LottoShopLazyHolder.instance;
     }
 
-
-    public PublishedLottoTicket buyLotto(int money) {
+    public PublishedLottoTicket buyLotto(int money, int manualLottoCount) {
         validatePriceIsEmpty(money);
         validatePriceIsDivide(money);
 
-        LottoTicketCount lottoTicketCount = new LottoTicketCount(money);
+        LottoTicketCount lottoTicketCount = new LottoTicketCount.LottoTicketCountBuilder()
+                .money(money)
+                .manualLottoCount(manualLottoCount)
+                .build();
+
         LottoMachine.getInstance();
-        PublishedLottoTicket publishedLottoTicket = new PublishedLottoTicket(lottoTicketCount.getLottoTicketCount());
+        PublishedLottoTicket publishedLottoTicket = new PublishedLottoTicket.PublishedLottoTicketBuilder()
+                .autoLottoTicketCounts(lottoTicketCount.getAutoLottoTicketCount())
+                .manualLottoCounts(manualLottoCount)
+                .build();
 
         return publishedLottoTicket;
     }
-
 
     private void validatePriceIsEmpty(int price) {
         if(price <= 0) {
