@@ -28,12 +28,24 @@ public enum LottoRank {
         return reward;
     }
 
+    public boolean isBonus() {
+        return bonus;
+    }
+
     public static LottoRank of(int matchCount, boolean matchBonus) {
 
         return Arrays.stream(values())
-                .filter(lottoRank -> (lottoRank.matchCount == matchCount) && (lottoRank.bonus == matchBonus))
+                .filter(lottoRank -> (lottoRank.getMatchCount() == matchCount) && (lottoRank.isBonus() == isSecond(matchCount, matchBonus)))
                 .findFirst()
                 .orElse(MISS);
+    }
+
+    private static boolean isSecond(int matchCount, boolean matchBonus) {
+        if (matchCount == 5) {
+            return (matchBonus == true) ? true : false;
+        }
+
+        return false;
     }
 
 }

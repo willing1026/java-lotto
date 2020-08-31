@@ -5,12 +5,8 @@ import nextstep.lotto.utils.LottoNumberUtil;
 import nextstep.lotto.view.InputView;
 import nextstep.lotto.view.ResultView;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static nextstep.lotto.dto.LottoResultBoard.LOTTO_VALUE;
 
 public class LottoGame {
 
@@ -23,15 +19,15 @@ public class LottoGame {
     }
 
     private void playLottoGame() {
-        int moneyAmount = inputView.inputTotalAmountForBuy();
-
-        LottoTickets userLottoTickets = buyTicket(howManyBuyLottoTicket(moneyAmount));
-        resultView.showLottoTicket(userLottoTickets);
+        LottoBuyManger lottoBuyManger = LottoBuyManger.create(inputView.inputTotalAmountForBuy(), inputView.inputManualLottoAmoutForBuy());
+        LottoTickets userLottoTickets = buyTicket(lottoBuyManger);
+        resultView.showLottoTicket(userLottoTickets, lottoBuyManger);
 
         LottoWinnerNumbers winnerNumbers = castWinnerNumber(inputView.inputWinnerNumber(), inputView.inputBonusNumber());
 
-        resultView.showLottoResultBoard(LottoResultBoard.create(userLottoTickets, winnerNumbers));
+        resultView.showLottoResultBoard(LottoResultBoard.create(userLottoTickets.resultRank(winnerNumbers)));
     }
+
 
     private LottoWinnerNumbers castWinnerNumber(List<String> winnerNumbers, int bonusNumber) {
         return LottoWinnerNumbers.create(
@@ -40,16 +36,14 @@ public class LottoGame {
         );
     }
 
-    private LottoTickets buyTicket(int buyTicketCount) {
-        List<LottoTicket> tickets = Stream.generate((LottoNumberUtil::generator))
-                .limit(buyTicketCount)
-                .map(LottoTicket::create)
-                .collect(Collectors.toList());
+    private LottoTickets buyTicket(LottoBuyManger lottoBuyManger) {
+        List<LottoTicket> lottoTickets = buyManualTicket(lottoBuyManger.getManualLottoAmount());
 
-        return LottoTickets.create(tickets);
+        return LottoTickets.create(lottoTickets, lottoBuyManger.getAutoAmount());
     }
 
-    private int howManyBuyLottoTicket(int inputMoney) {
-        return inputMoney / LOTTO_VALUE;
+    private List<LottoTicket> buyManualTicket(int buyManualTicketCount) {
+        return inputView.inputManualNumber(buyManualTicketCount);
     }
+
 }
